@@ -67,6 +67,152 @@ gg1+geom_point()
 table(dflr$Default_Payment)
 
 
+#split the data into training and testing
+#trn(70%) and tst(30%)
+
+set.seed(123)
+
+rnum=sample(nrow(dflr),nrow(dflr)*0.7)
+
+head(rnum)
+
+nrow(dflr)
+
+trn=dflr[rnum,]
+tst=dflr[-rnum,]
+
+## use glm for logistical model 
+
+dflrlog=glm(Default_Payment~.,data = trn,family = "binomial")
+
+#predict on tst data and add new column in tst data
+
+
+tst$predProb=predict(dflrlog,tst,type = "response")    #predicts chances of being 1
+
+#type === respose will predict probabilities
+
+tst
+
+#convert probs into 1 or 0 bu threshold of 0.50
+
+tst$pred=ifelse(tst$predProb>0.5,'1','0')   #if probability is more than 0.5 convert into 1 or else if less than 0.5 convert into 0
+
+#check str of new column 'pred'
+
+str(tst$pred)
+
+#convert chr into favtor with levels 1 and 0
+
+tst$pred=factor(tst$pred,levels = c('1','0'))
+str(tst$pred)
+
+#to find accuracy of prediction we use 'caret' package 'confusionMatrix'
+library(caret)
+library(caret)
+
+confusionMatrix(tst$pred,tst$Default_Payment)   #requires predicted value and actual value
+#this model failed as accuracy is onl7 0.173 (17%)
+
+
+#cross validation model
+
+ctrl=trainControl(method = "repeatedcv",
+                  number = 10,savePredictions = TRUE)
+
+logcv=train(Default_Payment~.,data = trn,
+            method="glm", family="binomial",
+            trControl=ctrl)
+
+logcv
+
+#remove new created columns in tst file
+
+tst$pred=NULL
+tst$predProb=NULL
+
+# predict prob, convert to pred by 0.5 treshold
+# confusionMatrix for accuracy
+
+
+
+tst$predProb=predict(logcv,tst,type = "prob") 
+tst$pred=ifelse(tst$predProb>0.5,'1','0') 
+
+tst$pred=factor(tst$pred[1:9000],levels = c('1','0'))
+str(tst$pred)
+
+confusionMatrix(tst$pred,tst$Default_Payment)   #requires predicted value and actual value
+
+#conclusion: this is the better model as it gives 0.82(82%) accuracy
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
